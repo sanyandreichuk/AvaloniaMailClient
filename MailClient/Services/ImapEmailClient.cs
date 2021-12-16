@@ -48,7 +48,9 @@ namespace MailClient.Services
         public Task LoginAsync(string user, string password) => imap.LoginAsync(user, password);
 
         public Task StartTLSAsync() => imap.StartTLSAsync();
+
         public Task UseBestLoginAsync(string user, string password) => imap.UseBestLoginAsync(user, password);
+
         public void Dispose() => imap.Dispose();
     }
 }

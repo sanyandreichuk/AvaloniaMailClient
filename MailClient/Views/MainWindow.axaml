@@ -1,0 +1,205 @@
+<Window
+    x:Class="MailClient.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:Xilium.CefGlue.Avalonia;assembly=Xilium.CefGlue.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+    xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+    xmlns:m="clr-namespace:MailClient.Models"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mx="clr-namespace:MailClient.MarkupExtensions"
+    Title="Mail client"
+    Width="1200"
+    Height="600"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    CanResize="False"
+    Icon="/Assets/avalonia-logo.ico"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.5*" />
+            <ColumnDefinition Width="0.5*" />
+        </Grid.ColumnDefinitions>
+        <Grid
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="10,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="40" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="25" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Content="Server type" />
+                <ComboBox
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    Items="{Binding Source={mx:EnumBindingSource {x:Type m:ServerType}}}"
+                    SelectedItem="{Binding ServerType}" />
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Content="Encryption" />
+                <ComboBox
+                    Grid.Row="0"
+                    Grid.Column="4"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    Items="{Binding Source={mx:EnumBindingSource {x:Type m:Encryption}}}"
+                    SelectedItem="{Binding Encryption}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding .}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Content="Server" />
+                <TextBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Server}" />
+
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    Content="Username" />
+                <TextBox
+                    Grid.Row="1"
+                    Grid.Column="4"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Username}" />
+
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Content="Port" />
+                <TextBox
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Port}" />
+
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="3"
+                    Content="Password" />
+                <TextBox
+                    Grid.Row="2"
+                    Grid.Column="4"
+                    Margin="2"
+                    HorizontalAlignment="Stretch"
+                    PasswordChar="*"
+                    Text="{Binding Password}" />
+
+                <Button
+                    Grid.Row="3"
+                    Grid.Column="4"
+                    HorizontalAlignment="Right"
+                    Background="#1976D2"
+                    Command="{Binding StartCommand}"
+                    Content="Start"
+                    Foreground="White" />
+            </Grid>
+
+            <ListBox
+                Grid.Row="1"
+                Margin="4"
+                Background="White"
+                Items="{Binding Envelops}"
+                SelectedItem="{Binding SelectedEnvelop}"
+                SelectionMode="Single">
+
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListBox.Styles>
+
+                <i:Interaction.Behaviors>
+                    <ia:EventTriggerBehavior EventName="Tapped">
+                        <ia:InvokeCommandAction Command="{Binding ShowContentCommand}" CommandParameter="{Binding SelectedEnvelop}" />
+                    </ia:EventTriggerBehavior>
+                </i:Interaction.Behaviors>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="100,*, Auto">
+                            <TextBlock
+                                Grid.Column="0"
+                                Width="100"
+                                HorizontalAlignment="Left"
+                                FontSize="10"
+                                Text="{Binding From}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Margin="10,0,10,0"
+                                HorizontalAlignment="Stretch"
+                                FontSize="10"
+                                Text="{Binding Subject}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                            <TextBlock
+                                Grid.Column="2"
+                                HorizontalAlignment="Right"
+                                FontSize="10"
+                                Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                TextAlignment="Right" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ProgressBar
+                Grid.Row="1"
+                Margin="4,0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="White"
+                IsIndeterminate="True"
+                IsVisible="{Binding IsBusy}" />
+        </Grid>
+        <Border
+            Grid.Row="0"
+            Grid.Column="1"
+            Width="596"
+            Height="596"
+            Padding="4"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            BorderBrush="LightGray"
+            BorderThickness="1"
+            CornerRadius="5">
+            <b:AvaloniaCefBrowser Name="Browser" />
+        </Border>
+    </Grid>
+</Window>

@@ -4,11 +4,7 @@ namespace MailClient.ViewModels
 {
     public class ViewModelBase : ReactiveObject
     {
-        private bool isBusy;
-        public bool IsBusy
-        {
-            get => isBusy;
-            set => this.RaiseAndSetIfChanged(ref isBusy, value);
-        }
+        protected ObservableAsPropertyHelper<bool>? isBusy;
+        public bool IsBusy => isBusy?.Value ?? false;
     }
 }

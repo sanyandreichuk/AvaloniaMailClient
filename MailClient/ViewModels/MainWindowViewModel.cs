@@ -4,10 +4,10 @@ using MailClient.Models;
 using MailClient.Services;
 using ReactiveUI;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 
 namespace MailClient.ViewModels
 {
@@ -77,7 +77,7 @@ namespace MailClient.ViewModels
             set => this.RaiseAndSetIfChanged(ref content, value);
         }
 
-        public ReactiveCommand<Unit, Unit> StartCommand { get; }
+        public ReactiveCommand<Unit, IReadOnlyCollection<EmailEnvelop>> StartCommand { get; }
         public ReactiveCommand<EmailEnvelop, Unit> ShowContentCommand { get; }
 
 
@@ -97,53 +97,47 @@ namespace MailClient.ViewModels
                 .Bind(out envelops)
                 .Subscribe();
 
-            var startCanExecute =
-                this.WhenAnyValue(
-                    x => x.IsBusy,
-                    x => x.Username,
-                    x => x.Password,
-                    (isBusy, userName, password) => !isBusy && !string.IsNullOrWhiteSpace(userName) && !string.IsNullOrWhiteSpace(password))
-                .ObserveOn(RxApp.MainThreadScheduler);
+            StartCommand =
+                ReactiveCommand
+                .CreateFromObservable(
+                    () =>
+                    {
+                        source.Clear();
 
-            StartCommand = ReactiveCommand.Create(StartExecute, startCanExecute);
-            ShowContentCommand = ReactiveCommand.CreateFromTask<EmailEnvelop>(ShowBodyExecute);
-        }
-
-        private void StartExecute()
-        {
-            IsBusy = true;
-
-            source.Clear();
-
-            var connection = new ConnectionOptions(Encryption, Server, Port, Username, Password);
-
-            var observable =
-                emailService
-                    .Download(connection)
-                    .ObserveOn(RxApp.MainThreadScheduler)
-                    .Subscribe(
-                        ev => source.AddOrUpdate(ev),
-                        onCompleted: () => IsBusy = false,
-                        onError: (ex) =>
-                        {
-                            IsBusy = false;
-                            Content = ex.Message;
-                        }
+                        var connection = new ConnectionOptions(Encryption, Server, Port, Username, Password);
+                        return emailService.Download(connection);
+                    },
+                    this.WhenAnyValue(
+                        vm => vm.IsBusy, vm => vm.Username, vm => vm.Password,
+                        (isBusy, userName, password) => !isBusy && !string.IsNullOrWhiteSpace(userName) && !string.IsNullOrWhiteSpace(password))
                     );
-        }
 
-        private async Task ShowBodyExecute(EmailEnvelop envelop)
-        {
-            if (envelop == null)
-            {
-                return;
-            }
+            StartCommand
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(
+                    ev => source.AddOrUpdate(ev),
+                    onError: (ex) => Content = ex.Message);
 
-            Content = "Loading...";
+            this.WhenAnyObservable(vm => vm.StartCommand.IsExecuting)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .ToProperty(this, nameof(IsBusy), out isBusy);
 
-            var connection = new ConnectionOptions(Encryption, Server, Port, Username, Password);
+            ShowContentCommand =
+                ReactiveCommand
+                .CreateFromTask<EmailEnvelop>(
+                    async envelop =>
+                    {
+                        if (envelop == null)
+                        {
+                            return;
+                        }
 
-            Content = await emailService.DownloadBodyAsync(envelop.Id, connection);
+                        Content = "Loading...";
+
+                        var connection = new ConnectionOptions(Encryption, Server, Port, Username, Password);
+
+                        Content = await emailService.DownloadBodyAsync(envelop.Id, connection);
+                    });
         }
 
         private void UpdateService()

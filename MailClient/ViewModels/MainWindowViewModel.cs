@@ -89,16 +89,6 @@ namespace MailClient.ViewModels
                 .Bind(out envelops)
                 .Subscribe();
 
-            this.WhenAnyValue(vm => vm.ServerType)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(
-                _ =>
-                {
-                    emailService = emailServiceFactory(ServerType);
-                    source.Clear();
-                    Content = string.Empty;
-                });
-
             StartCommand =
                 ReactiveCommand
                 .CreateFromObservable(
@@ -107,6 +97,9 @@ namespace MailClient.ViewModels
                         source.Clear();
 
                         var connection = new ConnectionOptions(Encryption, Server, Port, Username, Password);
+
+                        emailService = emailServiceFactory(ServerType);
+
                         return emailService.Download(connection);
                     },
                     this.WhenAnyValue(

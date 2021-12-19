@@ -117,8 +117,11 @@ namespace MailClient.ViewModels
             StartCommand
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(
-                    ev => source.AddOrUpdate(ev),
-                    onError: (ex) => Content = ex.Message);
+                    ev => source.AddOrUpdate(ev));
+
+            StartCommand
+                .ThrownExceptions
+                .Subscribe(ex => Content = ex.Message);
 
             this.WhenAnyObservable(vm => vm.StartCommand.IsExecuting)
                 .ObserveOn(RxApp.MainThreadScheduler)

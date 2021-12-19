@@ -17,11 +17,7 @@ namespace MailClient.ViewModels
         public ServerType ServerType
         {
             get => serverType;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref serverType, value);
-                UpdateService();
-            }
+            set => this.RaiseAndSetIfChanged(ref serverType, value);
         }
 
         private Encryption encryption = Encryption.SSL_TLS;
@@ -80,14 +76,10 @@ namespace MailClient.ViewModels
         public ReactiveCommand<Unit, IReadOnlyCollection<EmailEnvelop>> StartCommand { get; }
         public ReactiveCommand<EmailEnvelop, Unit> ShowContentCommand { get; }
 
-
-        private readonly Func<ServerType, IEmailService> emailServiceFactory;
         private IEmailService emailService;
 
         public MainWindowViewModel(Func<ServerType, IEmailService> emailServiceFactory)
         {
-            this.emailServiceFactory = emailServiceFactory;
-
             emailService = emailServiceFactory(ServerType);
 
             source
@@ -96,6 +88,16 @@ namespace MailClient.ViewModels
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Bind(out envelops)
                 .Subscribe();
+
+            this.WhenAnyValue(vm => vm.ServerType)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(
+                _ =>
+                {
+                    emailService = emailServiceFactory(ServerType);
+                    source.Clear();
+                    Content = string.Empty;
+                });
 
             StartCommand =
                 ReactiveCommand
@@ -138,13 +140,6 @@ namespace MailClient.ViewModels
 
                         Content = await emailService.DownloadBodyAsync(envelop.Id, connection);
                     });
-        }
-
-        private void UpdateService()
-        {
-            emailService = emailServiceFactory(ServerType);
-            source.Clear();
-            Content = string.Empty;
         }
     }
 }

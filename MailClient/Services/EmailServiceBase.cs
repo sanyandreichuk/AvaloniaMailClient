@@ -1,6 +1,6 @@
-﻿using Limilabs.Mail;
+﻿using AsyncKeyedLock;
+using Limilabs.Mail;
 using MailClient.Extensions;
-using MailClient.Helpers;
 using MailClient.Models;
 using System;
 using System.Collections.Concurrent;
@@ -15,7 +15,7 @@ namespace MailClient.Services
     public abstract class EmailServiceBase : IEmailService
     {
         protected readonly ConcurrentDictionary<string, string> BodyCache = new();
-        protected static readonly AsyncDuplicateLock Locker = new();
+        protected static readonly AsyncKeyedLocker<string> Locker = new();
         protected readonly Func<IEmailClient> clientFactory;
         private readonly int connectionCount;
         private readonly int chunkSize;
